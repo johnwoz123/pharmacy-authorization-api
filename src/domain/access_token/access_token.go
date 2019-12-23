@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	expirationTime = 24
+	expirationTime       = 24
+	grantTypePassword    = "password"
+	grantTypeClientCreds = "client_credentials"
 )
 
 type AccessToken struct {
@@ -16,8 +18,30 @@ type AccessToken struct {
 	Expires     int64  `json:"expires"`
 }
 
-type Repository interface {
-	GetById(string) (*AccessToken, *errors.RestErrors)
+type AccessTokenRequest struct {
+	GrantType string `json:"grant_type"`
+	// password grant type
+	Username int64  `json:"user_name"`
+	Password string `json:"password"`
+	// used for client creds grant type
+	ClientId     int64  `json:"client_id"`
+	ClientSecret int64  `json:"client_secret"`
+	Scope        string `json:"scope"`
+}
+
+func (token *AccessToken) Validate() *errors.RestErrors {
+	if token.UserId <= 0 {
+		return errors.BadRequestError("invalid user id")
+	}
+
+	if token.ClientId <= 0 {
+		return errors.BadRequestError("invalid client id")
+	}
+
+	if token.Expires <= 0 {
+		return errors.BadRequestError("invalid expiration time")
+	}
+	return nil
 }
 
 func GetAccessToken() AccessToken {

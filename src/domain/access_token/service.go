@@ -1,14 +1,23 @@
 package access_token
 
 import (
+	"github.com/johnwoz123/pharmacy-authorization-api/src/utils/crypto"
 	"github.com/johnwoz123/pharmacy-authorization-api/src/utils/errors"
 	"strings"
 )
+
+type Repository interface {
+	GetById(string) (*AccessToken, *errors.RestErrors)
+	Create(AccessToken) *errors.RestErrors
+	UpdateExpirationTime(AccessToken) *errors.RestErrors
+}
 
 // Service is responsible for handling the business logic for the domain
 
 type Service interface {
 	GetById(string) (*AccessToken, *errors.RestErrors)
+	Create(AccessToken) *errors.RestErrors
+	UpdateExpirationTime(AccessToken) *errors.RestErrors
 }
 
 type service struct {
@@ -32,4 +41,23 @@ func (s *service) GetById(accessTokenId string) (*AccessToken, *errors.RestError
 		return nil, err
 	}
 	return accessToken, nil
+}
+
+func (s *service) Create(token AccessToken) *errors.RestErrors {
+	if err := token.Validate(); err != nil {
+		return err
+	}
+	token.AccessToken = crypto.GenerateToken()
+	token.AccessToken = strings.TrimSpace(token.AccessToken)
+	if len(token.AccessToken) == 0 {
+		return errors.BadRequestError("invalid access_token_id")
+	}
+	return s.repo.Create(token)
+}
+
+func (s *service) UpdateExpirationTime(time AccessToken) *errors.RestErrors {
+	if err := time.Validate(); err != nil {
+		return err
+	}
+	return s.repo.UpdateExpirationTime(time)
 }

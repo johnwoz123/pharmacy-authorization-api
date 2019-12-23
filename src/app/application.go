@@ -18,6 +18,7 @@ func StartApp() {
 	service := access_token.NewService(mysql.NewRepo())
 	handler := rest.NewHttpHandler(service)
 
+	router.POST("/auth/access_token", handler.Create)
 	router.GET("/auth/access_token/:access_token_id", handler.GetById)
 	router.Run(":8081")
 }
